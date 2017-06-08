@@ -79,7 +79,7 @@ function startGame(gametype) {
             pturn.innerHTML = "Black";
     }
 
-    //Decode placeholder values in array into black or white unicode chess pieces for display 
+    //Decode placeholder values in array into black or white chess pieces as @font-face, changed from unicode, sorry IE 8 and below
     function decode(value) {
         //pawn, rook, bishop, knight, queen, and king, respectively
         var types = ['p', 'r', 'b', 'k', 'q', 'g'];
@@ -88,17 +88,17 @@ function startGame(gametype) {
                 if (value.includes("white")) {
                     switch (types[i]) {
                         case 'p':
-                            return "&#9817;";
+                            return "p";
                         case 'r':
-                            return "&#9814;";
+                            return "r";
                         case 'b':
-                            return "&#9815;";
+                            return "b";
                         case 'k':
-                            return "&#9816;";
+                            return "n";
                         case 'q':
-                            return "&#9813;";
+                            return "q";
                         case 'g':
-                            return "&#9812;";
+                            return "k";
                         default:
                             console.log("Error decoding - input value=" + value);
                             break;
@@ -106,17 +106,17 @@ function startGame(gametype) {
                 } else if (value.includes("black")) {
                     switch (types[i]) {
                         case 'p':
-                            return "&#9823;";
+                            return "o";
                         case 'r':
-                            return "&#9820;";
+                            return "t";
                         case 'b':
-                            return "&#9821;";
+                            return "v";
                         case 'k':
-                            return "&#9822;";
+                            return "m";
                         case 'q':
-                            return "&#9819;";
+                            return "w";
                         case 'g':
-                            return "&#9818;";
+                            return "l";
                         default:
                             console.log("Error decoding: No type found; input value=" + value);
                             break;
@@ -324,12 +324,10 @@ function startGame(gametype) {
                 
                 if(boardMap[x+xdir][y] == 'x') {
                     result.push([x+xdir,y]);
-                } else if(boardMap[x+xdir][y] != 'x' && boardMap[x+xdir][y].includes(color)) {
-                    break;
                 } else if(boardMap[x+xdir][y] != 'x' && !boardMap[x+xdir][y].includes(color)) {
                     result.push([x+xdir,y]);
                     break;
-                }
+                } else break;
             }
             
             //Check vertical up
@@ -337,12 +335,10 @@ function startGame(gametype) {
                 
                 if(boardMap[x+xdir][y] == 'x') {
                     result.push([x+xdir,y]);
-                } else if(boardMap[x+xdir][y] != 'x' && boardMap[x+xdir][y].includes(color)) {
-                    break;
                 } else if(boardMap[x+xdir][y] != 'x' && !boardMap[x+xdir][y].includes(color)) {
                     result.push([x+xdir,y]);
                     break;
-                }
+                } else break;
             }
             
             //Check horizontal left
@@ -353,7 +349,7 @@ function startGame(gametype) {
                 } else if(boardMap[x][y+ydir] != 'x' && !boardMap[x][y+ydir].includes(color)) {
                     result.push([x, y+ydir]);
                     break;
-                }
+                } else break;
             }            
             
             //Check horizontal right
@@ -364,7 +360,7 @@ function startGame(gametype) {
                 } else if(boardMap[x, y+ydir] != 'x' && !boardMap[x][y+ydir].includes(color)) {
                     result.push([x, y+ydir]);
                     break;
-                }
+                } else break;
             }
 
         } else if (type == 'b') { //Calculate bishop moves
@@ -482,12 +478,10 @@ function startGame(gametype) {
                 
                 if(boardMap[x+xdir][y] == 'x') {
                     result.push([x+xdir,y]);
-                } else if(boardMap[x+xdir][y] != 'x' && boardMap[x+xdir][y].includes(color)) {
-                    break;
                 } else if(boardMap[x+xdir][y] != 'x' && !boardMap[x+xdir][y].includes(color)) {
                     result.push([x+xdir,y]);
                     break;
-                }
+                } else break;
             }
             
             //Check vertical up
@@ -495,12 +489,10 @@ function startGame(gametype) {
                 
                 if(boardMap[x+xdir][y] == 'x') {
                     result.push([x+xdir,y]);
-                } else if(boardMap[x+xdir][y] != 'x' && boardMap[x+xdir][y].includes(color)) {
-                    break;
                 } else if(boardMap[x+xdir][y] != 'x' && !boardMap[x+xdir][y].includes(color)) {
                     result.push([x+xdir,y]);
                     break;
-                }
+                } else break;
             }
             
             //Check horizontal left
@@ -511,7 +503,7 @@ function startGame(gametype) {
                 } else if(boardMap[x][y+ydir] != 'x' && !boardMap[x][y+ydir].includes(color)) {
                     result.push([x, y+ydir]);
                     break;
-                }
+                } else break;
             }            
             
             //Check horizontal right
@@ -522,8 +514,9 @@ function startGame(gametype) {
                 } else if(boardMap[x, y+ydir] != 'x' && !boardMap[x][y+ydir].includes(color)) {
                     result.push([x, y+ydir]);
                     break;
-                }
+                } else break;
             }
+            
             //Up Left
             for(var xinc = -1, yinc = -1; x+xinc >= 0 && y+yinc >= 0; xinc-=1, yinc-=1) {
                 var nextx = x+xinc, nexty = y+yinc;
@@ -750,7 +743,6 @@ function startGame(gametype) {
             //8 columns per row, starting at 0-7. if the index is the 8th, increment the row counter x where i is the column counter
             if (i % 8 == 0 && i != 0)
                 x += 1;
-
             if (x % 2 == 0 || x == 0) {
                 if (i % 2 == 0) cells[i].style.background = "#999";
                 else cells[i].style.background = "#f9f9f9";

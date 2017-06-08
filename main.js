@@ -12,5 +12,7 @@ pvpBtn.addEventListener('click', function() {
 });
 
 menuBtn.addEventListener('click', function() {
-    location.reload();
+    if(confirm("Are you sure you want to leave the game?\n Press cancel to stay on the page.")) {
+        location.reload();
+    }
 });
