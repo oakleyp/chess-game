@@ -15,7 +15,7 @@
 /* Adventurer chess font TTF from http://www.chessvariants.com/d.font/ */
 @font-face {
     font-family: adventure_chess;
-    src: url(./AVENFONT.ttf);
+    src: url(AVENFONT.TTF);
     
 }
 
