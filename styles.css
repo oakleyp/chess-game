@@ -12,6 +12,13 @@
   background: transparent;
 }
 
+/* Adventurer chess font TTF from http://www.chessvariants.com/d.font/ */
+@font-face {
+    font-family: adventure_chess;
+    src: url(AVENFONT.ttf);
+    
+}
+
 body {
     height: 100vh;
     padding: 0vh 0vw;
@@ -25,11 +32,10 @@ header {
     padding: 0vh 0vw;
     margin-bottom: 3vh;
     background: rgb(76,76,76); /* Old browsers */
-background: -moz-linear-gradient(top, rgba(76,76,76,1) 0%, rgba(89,89,89,1) 12%, rgba(102,102,102,1) 25%, rgba(71,71,71,1) 39%, rgba(44,44,44,1) 50%, rgba(0,0,0,1) 51%, rgba(17,17,17,1) 60%, rgba(43,43,43,1) 76%, rgba(28,28,28,1) 91%, rgba(19,19,19,1) 100%); /* FF3.6-15 */
-background: -webkit-linear-gradient(top, rgba(76,76,76,1) 0%,rgba(89,89,89,1) 12%,rgba(102,102,102,1) 25%,rgba(71,71,71,1) 39%,rgba(44,44,44,1) 50%,rgba(0,0,0,1) 51%,rgba(17,17,17,1) 60%,rgba(43,43,43,1) 76%,rgba(28,28,28,1) 91%,rgba(19,19,19,1) 100%); /* Chrome10-25,Safari5.1-6 */
-background: linear-gradient(to bottom, rgba(76,76,76,1) 0%,rgba(89,89,89,1) 12%,rgba(102,102,102,1) 25%,rgba(71,71,71,1) 39%,rgba(44,44,44,1) 50%,rgba(0,0,0,1) 51%,rgba(17,17,17,1) 60%,rgba(43,43,43,1) 76%,rgba(28,28,28,1) 91%,rgba(19,19,19,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4c4c4c', endColorstr='#131313',GradientType=0 ); /* IE6-9 */
-    
+    background: -moz-linear-gradient(top, rgba(76,76,76,1) 0%, rgba(89,89,89,1) 12%, rgba(102,102,102,1) 25%, rgba(71,71,71,1) 39%, rgba(44,44,44,1) 50%, rgba(0,0,0,1) 51%, rgba(17,17,17,1) 60%, rgba(43,43,43,1) 76%, rgba(28,28,28,1) 91%, rgba(19,19,19,1) 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, rgba(76,76,76,1) 0%,rgba(89,89,89,1) 12%,rgba(102,102,102,1) 25%,rgba(71,71,71,1) 39%,rgba(44,44,44,1) 50%,rgba(0,0,0,1) 51%,rgba(17,17,17,1) 60%,rgba(43,43,43,1) 76%,rgba(28,28,28,1) 91%,rgba(19,19,19,1) 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, rgba(76,76,76,1) 0%,rgba(89,89,89,1) 12%,rgba(102,102,102,1) 25%,rgba(71,71,71,1) 39%,rgba(44,44,44,1) 50%,rgba(0,0,0,1) 51%,rgba(17,17,17,1) 60%,rgba(43,43,43,1) 76%,rgba(28,28,28,1) 91%,rgba(19,19,19,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4c4c4c', endColorstr='#131313',GradientType=0 ); /* IE6-9 */
     box-shadow: -2px 2px 2px #000;
       
 }
@@ -43,13 +49,12 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4c4c4c', end
     background: linear-gradient(to bottom, #1e5799 0%,#2989d8 50%,#207cca 51%,#7db9e8 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1e5799', endColorstr='#7db9e8',GradientType=0 ); /* IE6-9 */
     
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
     transform: skewX(-20deg);
-    margin-left: -1vw;
+    margin-left: -2vw;
     margin-top: -1vh;
+    border: 1px solid #333;
     
-    margin-right: 50vw;
+    margin-right: 20vw;
 }
 h1 {
     font-size: 2em;
@@ -69,18 +74,43 @@ h2 {
 #menubtn {
     margin-bottom: 3vh;
     font-size: 1.1em;
-    padding: 1vh 1vw;
-    background: #ddd;
-    border: 1px solid #111;
+    padding: 1vh 2vw;
     position: absolute;
     right: 1vw;
     top: 2vh;
+    color: #FFF;
+    text-decoration: none;
+    line-height: 1.2em;
+    background: rgba(192,192,192,0.3);
+    border-radius: 10px;
+    transform: skewX(-20deg);
+    
+}
+
+#github {
+    margin-bottom: 3vh;
+    font-size: 1.1em;
+    padding: 1vh 2vw;
+    position: absolute;
+    right: 15vw;
+    top: 2vh;
+    color: #FFF;
+    text-decoration: none;
+    line-height: 1.2em;
+    background: rgba(192,192,192,0.3);
+    border-radius: 10px;
+    transform: skewX(-20deg);
+}
+
+#github:hover,
+#menubtn:hover {
+    background: rgba(32, 124, 202, 0.3);
 }
 
 #menu-screen button {
     margin-bottom: 3vh;
     font-size: 1.1em;
-    padding: 1vh 1vw;
+    padding: 2vh 1vw;
     background: #ddd;
     border: 1px solid #111;
 }
@@ -128,7 +158,7 @@ h2 {
 }
 
 .cell i {
-    font-family: "Tahoma";
+    font-family: adventure_chess;
     font-size: 2em;
     font-style: normal;
 }
@@ -168,7 +198,7 @@ h2 {
 
 #control-container button:hover {
     background: #999;
-    color: red;
+    color: #65D5E5;
 }
 
 #pturn-container {
