@@ -29,6 +29,7 @@ body {
 header {
     display: flex;
     flex-direction: row;
+    align-content: center;
     padding: 0vh 0vw;
     margin-bottom: 3vh;
     background: rgb(76,76,76); /* Old browsers */
@@ -72,34 +73,34 @@ h2 {
     margin-bottom: 4vh;
 }
 #menubtn {
-    margin-bottom: 3vh;
+    margin-bottom: 2vh;
+    margin-left: 33vw;
+    margin-top: 2vh;
     font-size: 1.1em;
     padding: 1vh 2vw;
-    position: absolute;
-    right: 1vw;
-    top: 2vh;
     color: #FFF;
     text-decoration: none;
     line-height: 1.2em;
     background: rgba(192,192,192,0.3);
     border-radius: 10px;
     transform: skewX(-20deg);
+    vertical-align: center;
     
 }
 
 #github {
-    margin-bottom: 3vh;
+    margin-bottom: 2vh;
+    margin-left: 1vw;
+    margin-top: 2vh;
     font-size: 1.1em;
     padding: 1vh 2vw;
-    position: absolute;
-    right: 15vw;
-    top: 2vh;
     color: #FFF;
     text-decoration: none;
     line-height: 1.2em;
     background: rgba(192,192,192,0.3);
     border-radius: 10px;
     transform: skewX(-20deg);
+    vertical-align: center;
 }
 
 #github:hover,
@@ -122,10 +123,10 @@ h2 {
 
 #game-screen {
     visibility: hidden;
+    padding: 0 6vw;
 }
 
 #board-container {
-    padding: 0 6vw;
     background: #7ed1a1;
     height: 65vh;
     margin-bottom: 3vh;
@@ -177,6 +178,17 @@ h2 {
     z-index: -1;
 }
 
+.space {
+    margin-right: 1px;
+}
+
+.tcount {
+    font-family: monospace;
+    font-style: normal;
+    font-size: 0.8em;
+    margin: 0;
+}
+
 #control-container {
     display: flex;
     flex-direction: row;
@@ -190,9 +202,10 @@ h2 {
     padding: 1vh;
     border: 1px solid #000;
     border-radius: 5px;
-    background: #ddd;
+    background: #333;
     box-shadow: 1px 1px 1px #999;
     font-size: 1.5em;
+    color: #fff;
     
 }
 
@@ -201,7 +214,132 @@ h2 {
     color: #65D5E5;
 }
 
+#top-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content:center;
+    margin-bottom: 1vh;
+}
+
 #pturn-container {
-    font-size: 1.5em;
+    font-size: 1em;
+    margin-right: 10vw;
+    border: 1px solid #777;
+    background: #ddd;
+    border-radius: 5px;
+    padding: 0vh 0vw;
+    position: relative;
+    top:0;
+    left:0;
+    overflow: hidden;
+    margin-left: 0;
+}
+
+#pturn-container span:nth-of-type(1) {
+    position: relative;
+    top:0px;
+    left:0;
+    padding: 5px 5px;
+    background: #333;
+    color: #fff;
+    border-radius: 5px;
+}
+
+#pturn {
+    margin-left: 1vw;
+    margin-right: 2vw;
+}
+
+#timer-container {
+    width: 30%;
+    margin-right: 2vw;
+    font-size: 1.2em;
+    overflow: hidden;
+}
+
+#pieces-taken-container {
+    border: 1px solid #777;
+    background: #ddd;
+    border-radius: 5px;
+    padding: 0vh 0vw;
+    text-align: left;
+    position: relative;
+    top:0;
+    right:0;
+    width: 35%;
+    overflow: hidden;
+    margin-right: -3vw;
+}
+
+#pieces-taken {
+    position: relative;
+    top:0px;
+    left: 0px;
+    padding: 5px 5px;
+    background: #333;
+    color: #fff;
+    border-radius: 5px;
+    display: inline;
+}
+
+#pieces-list {
+    font-family: adventure_chess;
+    font-size: 0.5em;
+    display: inline;
+    margin-left: 5px;
+}
+
+#pieces-list li {
+    list-style-type: none;
+    display: inline;
+    margin-right: 3px;
+}
+
+.display-text-center {
+    font-size: 3em;
+    color: #FFF;
+    position: relative;
+    top: 45%;
+    text-align: center;
+    z-index: 998;
+}
+
+/* Flips the box 360 deg clockwise on x-axis while fading in */
+@keyframes flip {
+  from {
+    opacity: 0;
+    transform: perspective(400px) rotate3d(0, 1, 0, -360deg);
+    animation-timing-function: ease-out;
+  }
+
+  40% {
+    transform: perspective(400px) translate3d(0, 0, 150px) rotate3d(0, 1, 0, -190deg);
+    animation-timing-function: ease-out;
+  }
+
+  50% {
+    transform: perspective(400px) translate3d(0, 0, 150px) rotate3d(0, 1, 0, -170deg);
+    animation-timing-function: ease-in;
+  }
+
+  80% {
+    opacity: 1;
+    transform: perspective(400px) scale3d(.95, .95, .95);
+    animation-timing-function: ease-in;
+  }
+
+  to {
+    opacity: 1;
+    transform: perspective(400px);
+    animation-timing-function: ease-in;
+  }
+}
+
+.flip {
+    visibility: visible;
+    animation-name: flip;
+    animation-duration: 1.5s; 
+    animation-play-state: running; 
 }
 

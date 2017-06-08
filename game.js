@@ -1,20 +1,28 @@
 "use strict";
 
+var paused = false;
+
+let stopwatch = new StopWatch(document.getElementById('timer'));
+
+function startTimer() {
+    stopwatch.start();
+}
+
+function stopTimer() {
+    paused = true;
+    stopwatch.stop();
+}
+
 function startGame(gametype) {
 
     var board = document.getElementById('board');
     var cells = document.getElementsByClassName('cell');
     var pturn = document.getElementById('pturn');
+    var taken = document.getElementById('pieces-list');
     var player = 1;
 
-    //Gets clicks anywhere in the body and calls selectPiece() or selectPlace() if it corresponds to a game piece or cell on the board
-    document.querySelector('body').addEventListener('click', function (event) {
-        if (event.target.tagName.toLowerCase() === 'i' && event.target.classList.contains("piece")) {
-            selectPiece(event.target.getAttribute("id"));
-        } else if (event.target.className.toLowerCase() === 'cell') {
-            selectPlace(event.target.getAttribute("id"));
-        }
-    });
+    startTimer();
+
 
     //Declare and initialize 2D array to store positions of all pieces on board, 0-7 right to left indexes containing 0-7 up and down for rows and columns, respectively.
     var boardMap = [];
@@ -25,19 +33,22 @@ function startGame(gametype) {
     //Stores a list of all boardMaps at every point a piece changes position during the game
     var gameStates = [];
 
+    //Stores a list of all takenPieces[] at every point a piece is taken
+    var pieceStates = [];
+
     //Stores the currently selected piece's x([0]), y([1]) coordinates
     var selectedPiece = [];
-    
+
     //Stores taken pieces from both teams
     var takenPieces = [];
 
     //Array to store initial player1 pieces
-    var p1pieces = ['rwhite1', 'kwhite1', 'bwhite1', 'qwhite', 'gwhite', 'bwhite2', 'kwhite2', 'rwhite2',
-                'pwhite1', 'pwhite2', 'pwhite3', 'pwhite4', 'pwhite5', 'pwhite6', 'pwhite7', 'pwhite8'];
+    var p1pieces = ['rwhite', 'kwhite', 'bwhite', 'qwhite', 'gwhite', 'bwhite', 'kwhite', 'rwhite',
+                'pwhite', 'pwhite', 'pwhite', 'pwhite', 'pwhite', 'pwhite', 'pwhite', 'pwhite'];
 
     //Array to store initial player2 pieces
-    var p2pieces = ['pblack1', 'pblack2', 'pblack3', 'pblack4', 'pblack5', 'pblack6', 'pblack7', 'pblack8',
-                'rblack1', 'kblack1', 'bblack1', 'qblack', 'gblack', 'bblack2', 'kblack2', 'rblack2'];
+    var p2pieces = ['pblack', 'pblack', 'pblack', 'pblack', 'pblack', 'pblack', 'pblack', 'pblack',
+                'rblack', 'kblack', 'bblack', 'qblack', 'gblack', 'bblack', 'kblack', 'rblack'];
 
 
     // set board cell bgs to alternating color and place p1 and p2 game pieces in initial location in boardMap
@@ -73,9 +84,9 @@ function startGame(gametype) {
 
     //Prints the current player's turn to html id 'pturn'
     function printTurn() {
-        if(player == 1) 
+        if (player == 1)
             pturn.innerHTML = "White";
-        else 
+        else
             pturn.innerHTML = "Black";
     }
 
@@ -125,6 +136,62 @@ function startGame(gametype) {
             }
         }
     }
+    
+    //Displays specified text on screen with a specified animation inside DIV id='display-text-container'
+    function displayText(text, animationclass) {
+        switch(animationclass) {
+            default:
+            case 'flip':
+                var container = document.getElementById('display-text-container');
+                var elem = document.createElement("h1");
+                elem.innerHTML = text;
+                elem.classList.add('display-text-center');
+                elem.classList.add('flip');
+                
+                //Clear other elements first so they don't overlap
+                var matchNodes = container.getElementsByClassName('display-text-center');
+                if(matchNodes.length > 0)
+                    container.removeChild(matchNodes[0]);
+                
+                container.appendChild(elem);
+            }
+    }
+    
+    //Prints taken pieces, given array takenPieces[], to DOM element 'pieces-list'
+    function printTaken(takenPieces) {
+        //Clear taken pieces from display 
+        taken.innerHTML = "";
+
+        //Convert nodelist to array as copy
+        var pieces = Array.from(takenPieces);
+
+        //Store pieces to be printed to screen, so that duplicates are displayed with a counter
+        //2d array -> [0] = piece data | [1] = number of duplicates
+        var printQueue = [];
+
+        //Check for duplicate pieces in printqueue, and if existent, increment the counter
+        for (var i = 0; i < pieces.length; i++) {
+            var dupe = false;
+            var queuedItem = pieces[i];
+            for (var x = 0; x < printQueue.length; x++) {
+                if (printQueue[x][0] == queuedItem) {
+                    printQueue[x][1] += 1;
+                    dupe = true;
+                }
+            }
+            if (!dupe)
+                printQueue.push([queuedItem, 1]);
+        }
+
+        //Print the pieces to display
+        for (var i = 0; i < printQueue.length; i++) {
+            var displayStr = `<li><i class="tcount">${printQueue[i][1]}</i><i class="space"></i>${decode(printQueue[i][0])}</li>`;
+            var newItem = document.createElement("li");
+            newItem.innerHTML = displayStr;
+            console.log("piece taken - display: " + newItem.innerHTML);
+            taken.appendChild(newItem);
+        }
+    }
 
     //Prints the 2d array boardMap to html id 'board'
     function printBoard(boardMap) {
@@ -136,6 +203,7 @@ function startGame(gametype) {
                 else if (boardMap[x][y] != 'x' && boardMap[x][y].includes("white"))
                     cells[i].innerHTML = `<i id="piece${getCellIndex(x, y)}" class="piece white">${decode(boardMap[x][y])}</i>`;
                 else
+                    //Keeping space filled with invisible text stops board resizing
                     cells[i].innerHTML = `<i class="piece invisible">x</i>`;
 
                 if (y != 7) i++;
@@ -201,39 +269,56 @@ function startGame(gametype) {
     function movePiece(boardMap, x, y, newx, newy) {
         //Add current boardMap to gameStates
         gameStates.push(boardMap);
-        
+
         var color = "white";
         if (boardMap[x][y].includes("white")) {
             color = "white";
         } else if (boardMap[x][y].includes("black")) {
             color = "black";
         }
-        
+
         //Make sure own pieces can't be taken
-        if(color == "white" && boardMap[newx][newy].includes("white")) {
+        if (color == "white" && boardMap[newx][newy].includes("white")) {
             console.log("Can't take own piece.");
-        } else if(color == "black" && boardMap[newx][newy].includes("black")) {
+        } else if (color == "black" && boardMap[newx][newy].includes("black")) {
             console.log("Can't take own piece.");
         }
-        
+
         var piece = boardMap[x][y];
         var moves = calcMoves(piece.charAt(0), boardMap, x, y);
         var valid = false;
-        
+
         //See if requested move is valid
-        for(var i = 0; i < moves.length; i+=1) {
-            if(moves[i][0] == newx && moves[i][1] == newy) {
+        for (var i = 0; i < moves.length; i += 1) {
+            if (moves[i][0] == newx && moves[i][1] == newy) {
                 valid = true;
             }
         }
-        
-        if(valid) {
+
+        if (valid) {
+            //Check if piece was taken, if so, refresh taken display
+            if (boardMap[newx][newy] != 'x') {
+                //See if there's a winner
+                if(boardMap[newx][newy].charAt(0) == 'g') {
+                    //King taken, determine and display winning team
+                    if(boardMap[x][y].includes("black")) {
+                        displayText("Black Wins!!!", "flip");
+                        stopTimer();
+                    } else if(boardMap[x][y].includes("white")) {
+                        displayText("White Wins!!!", "flip");
+                        stopTimer();
+                    }
+                }
+                takenPieces.push(boardMap[newx][newy]);
+                pieceStates.push(takenPieces);
+                printTaken(takenPieces);
+            }
+
             boardMap[x][y] = 'x';
-            takenPieces.push(boardMap[newx][newy]);
             boardMap[newx][newy] = piece;
-            
+
             //Switch players and reset
-            if(player == 1) player = 2;
+            if (player == 1) player = 2;
             else player = 1;
             printTurn();
             printBoard(boardMap);
@@ -243,13 +328,13 @@ function startGame(gametype) {
             console.log("Invalid move.");
             gameStates.pop();
         }
-        
+
 
     }
 
     //Returns all of a pieces' available moves as a 2d array of x,y coordinates 
     function calcMoves(type, boardMap, x, y) {
-        
+
         var color = "white"; //Color of currently selected piece
 
         if (boardMap[x][y].includes("white")) {
@@ -271,20 +356,20 @@ function startGame(gametype) {
             } else if (color == "black") {
                 xdirection = -1;
             }
-            
+
             //Set up starting case, check space 2 squares in front
-            if((color == "black" && x == 6) || (color == "white" && x == 1)) {
-                var xi = x+(xdirection*2);
+            if ((color == "black" && x == 6) || (color == "white" && x == 1)) {
+                var xi = x + (xdirection * 2);
                 //Make sure there is space 2 ahead and are no enemies or friendlies directly in front
-                if (boardMap[xi][y] == 'x' && boardMap[xi-xdirection][y] == 'x') {
+                if (boardMap[xi][y] == 'x' && boardMap[xi - xdirection][y] == 'x') {
                     result.push([xi, y]);
                     console.log("Calculated pawn move at " + xi + ", " + y);
                 }
-            } 
-            
+            }
+
 
             //Check space 1 square in front
-            if(x + xdirection >= 0 && x + xdirection < 8) {
+            if (x + xdirection >= 0 && x + xdirection < 8) {
                 if (boardMap[x + xdirection][y] == 'x') {
                     result.push([(x + xdirection), y]);
                     console.log("Calculated pawn move at " + (x + xdirection) + ", " + y);
@@ -318,62 +403,79 @@ function startGame(gametype) {
         } else if (type == 'r') { //Calculate rook moves
 
             //Rook can move any amount of free spaces vertically or horizontally
-            
+
             //Check vertical down
-            for(var xdir = -1; x+xdir >= 0 && x+xdir < 8; xdir-=1) {
-                
-                if(boardMap[x+xdir][y] == 'x') {
-                    result.push([x+xdir,y]);
-                } else if(boardMap[x+xdir][y] != 'x' && !boardMap[x+xdir][y].includes(color)) {
-                    result.push([x+xdir,y]);
+            for (var xdir = -1; x + xdir >= 0 && x + xdir < 8; xdir -= 1) {
+
+                if (boardMap[x + xdir][y] == 'x') {
+                    result.push([x + xdir, y]);
+                } else if (boardMap[x + xdir][y] != 'x' && !boardMap[x + xdir][y].includes(color)) {
+                    if (boardMap[x + xdir][y].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x + xdir, y]);
                     break;
                 } else break;
             }
-            
+
             //Check vertical up
-            for(var xdir = 1; x+xdir >= 0 && x+xdir < 8; xdir+=1) {
-                
-                if(boardMap[x+xdir][y] == 'x') {
-                    result.push([x+xdir,y]);
-                } else if(boardMap[x+xdir][y] != 'x' && !boardMap[x+xdir][y].includes(color)) {
-                    result.push([x+xdir,y]);
+            for (var xdir = 1; x + xdir >= 0 && x + xdir < 8; xdir += 1) {
+
+                if (boardMap[x + xdir][y] == 'x') {
+                    result.push([x + xdir, y]);
+                } else if (boardMap[x + xdir][y] != 'x' && !boardMap[x + xdir][y].includes(color)) {
+                    if (boardMap[x + xdir][y].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x + xdir, y]);
                     break;
                 } else break;
             }
-            
+
             //Check horizontal left
-            for(var ydir = -1; y+ydir >= 0 && y+ydir < 8; ydir-=1) {
-                
-                if(boardMap[x][y+ydir] == 'x') {
-                    result.push([x, y+ydir]);
-                } else if(boardMap[x][y+ydir] != 'x' && !boardMap[x][y+ydir].includes(color)) {
-                    result.push([x, y+ydir]);
+            for (var ydir = -1; y + ydir >= 0 && y + ydir < 8; ydir -= 1) {
+
+                if (boardMap[x][y + ydir] == 'x') {
+                    result.push([x, y + ydir]);
+                } else if (boardMap[x][y + ydir] != 'x' && !boardMap[x][y + ydir].includes(color)) {
+                    if (boardMap[x][y + ydir].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x, y + ydir]);
                     break;
                 } else break;
-            }            
-            
+            }
+
             //Check horizontal right
-            for(var ydir = 1; y+ydir >= 0 && y+ydir < 8; ydir+=1) {
-                
-                if(boardMap[x][y+ydir] == 'x') {
-                    result.push([x, y+ydir]);
-                } else if(boardMap[x, y+ydir] != 'x' && !boardMap[x][y+ydir].includes(color)) {
-                    result.push([x, y+ydir]);
+            for (var ydir = 1; y + ydir >= 0 && y + ydir < 8; ydir += 1) {
+
+                if (boardMap[x][y + ydir] == 'x') {
+                    result.push([x, y + ydir]);
+                } else if (boardMap[x][y + ydir] != 'x' && !boardMap[x][y + ydir].includes(color)) {
+                    if (boardMap[x][y + ydir].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x, y + ydir]);
                     break;
                 } else break;
             }
 
         } else if (type == 'b') { //Calculate bishop moves
-            
+
             //Bishop can move diagonally in any direction until it hits a wall, player, or enemy
-            
+
             //Up Left
-            for(var xinc = -1, yinc = -1; x+xinc >= 0 && y+yinc >= 0; xinc-=1, yinc-=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = -1, yinc = -1; x + xinc >= 0 && y + yinc >= 0; xinc -= 1, yinc -= 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -384,14 +486,15 @@ function startGame(gametype) {
                     break;
                 }
             }
-            
+
             //Up Right
-            for(var xinc = -1, yinc = 1; x+xinc >= 0 && y+yinc < 8; xinc-=1, yinc+=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = -1, yinc = 1; x + xinc >= 0 && y + yinc < 8; xinc -= 1, yinc += 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -402,14 +505,15 @@ function startGame(gametype) {
                     break;
                 }
             }
-            
+
             //Down Left
-            for(var xinc = 1, yinc = -1; x+xinc < 8 && y+yinc >= 0; xinc+=1, yinc-=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = 1, yinc = -1; x + xinc < 8 && y + yinc >= 0; xinc += 1, yinc -= 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -420,14 +524,15 @@ function startGame(gametype) {
                     break;
                 }
             }
-            
+
             //Down Right
-            for(var xinc = 1, yinc = 1; x+xinc < 8 && y+yinc < 8; xinc+=1, yinc+=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = 1, yinc = 1; x + xinc < 8 && y + yinc < 8; xinc += 1, yinc += 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -438,7 +543,7 @@ function startGame(gametype) {
                     break;
                 }
             }
-            
+
 
         } else if (type == 'k') { //Calculate knight moves
 
@@ -470,60 +575,80 @@ function startGame(gametype) {
             }
 
         } else if (type == 'q') { //Calculate queen moves
-            
+
             //Queen can move in any direction for any amount of squares, until it hits a wall, player, or enemy
-            
+
             //Check vertical down
-            for(var xdir = -1; x+xdir >= 0 && x+xdir < 8; xdir-=1) {
-                
-                if(boardMap[x+xdir][y] == 'x') {
-                    result.push([x+xdir,y]);
-                } else if(boardMap[x+xdir][y] != 'x' && !boardMap[x+xdir][y].includes(color)) {
-                    result.push([x+xdir,y]);
+            for (var xdir = -1; x + xdir >= 0 && x + xdir < 8; xdir -= 1) {
+
+                if (boardMap[x + xdir][y] == 'x') {
+                    result.push([x + xdir, y]);
+                } else if (boardMap[x + xdir][y] != 'x' && boardMap[x + xdir][y].includes(color)) {
+                    break;
+                } else if (boardMap[x + xdir][y] != 'x' && !boardMap[x + xdir][y].includes(color)) {
+                    if (boardMap[x + xdir][y].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x + xdir, y]);
                     break;
                 } else break;
             }
-            
+
             //Check vertical up
-            for(var xdir = 1; x+xdir >= 0 && x+xdir < 8; xdir+=1) {
-                
-                if(boardMap[x+xdir][y] == 'x') {
-                    result.push([x+xdir,y]);
-                } else if(boardMap[x+xdir][y] != 'x' && !boardMap[x+xdir][y].includes(color)) {
-                    result.push([x+xdir,y]);
+            for (var xdir = 1; x + xdir >= 0 && x + xdir < 8; xdir += 1) {
+
+                if (boardMap[x + xdir][y] == 'x') {
+                    result.push([x + xdir, y]);
+                } else if (boardMap[x + xdir][y] != 'x' && boardMap[x + xdir][y].includes(color)) {
+                    break;
+                } else if (boardMap[x + xdir][y] != 'x' && !boardMap[x + xdir][y].includes(color)) {
+                    if (boardMap[x + xdir][y].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x + xdir, y]);
                     break;
                 } else break;
             }
-            
+
             //Check horizontal left
-            for(var ydir = -1; y+ydir >= 0 && y+ydir < 8; ydir-=1) {
-                
-                if(boardMap[x][y+ydir] == 'x') {
-                    result.push([x, y+ydir]);
-                } else if(boardMap[x][y+ydir] != 'x' && !boardMap[x][y+ydir].includes(color)) {
-                    result.push([x, y+ydir]);
+            for (var ydir = -1; y + ydir >= 0 && y + ydir < 8; ydir -= 1) {
+
+                if (boardMap[x][y + ydir] == 'x') {
+                    result.push([x, y + ydir]);
+                } else if (boardMap[x][y + ydir] != 'x' && !boardMap[x][y + ydir].includes(color)) {
+                    if (boardMap[x][y + ydir].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x, y + ydir]);
                     break;
                 } else break;
-            }            
-            
+            }
+
             //Check horizontal right
-            for(var ydir = 1; y+ydir >= 0 && y+ydir < 8; ydir+=1) {
-                
-                if(boardMap[x][y+ydir] == 'x') {
-                    result.push([x, y+ydir]);
-                } else if(boardMap[x, y+ydir] != 'x' && !boardMap[x][y+ydir].includes(color)) {
-                    result.push([x, y+ydir]);
+            for (var ydir = 1; y + ydir >= 0 && y + ydir < 8; ydir += 1) {
+
+                if (boardMap[x][y + ydir] == 'x') {
+                    result.push([x, y + ydir]);
+                } else if (boardMap[x][y + ydir] != 'x' && !boardMap[x][y + ydir].includes(color)) {
+                    if (boardMap[x][y + ydir].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x, y + ydir]);
                     break;
                 } else break;
             }
-            
             //Up Left
-            for(var xinc = -1, yinc = -1; x+xinc >= 0 && y+yinc >= 0; xinc-=1, yinc-=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = -1, yinc = -1; x + xinc >= 0 && y + yinc >= 0; xinc -= 1, yinc -= 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -534,14 +659,15 @@ function startGame(gametype) {
                     break;
                 }
             }
-            
+
             //Up Right
-            for(var xinc = -1, yinc = 1; x+xinc >= 0 && y+yinc < 8; xinc-=1, yinc+=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = -1, yinc = 1; x + xinc >= 0 && y + yinc < 8; xinc -= 1, yinc += 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -552,14 +678,15 @@ function startGame(gametype) {
                     break;
                 }
             }
-            
+
             //Down Left
-            for(var xinc = 1, yinc = -1; x+xinc < 8 && y+yinc >= 0; xinc+=1, yinc-=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = 1, yinc = -1; x + xinc < 8 && y + yinc >= 0; xinc += 1, yinc -= 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -570,14 +697,15 @@ function startGame(gametype) {
                     break;
                 }
             }
-            
+
             //Down Right
-            for(var xinc = 1, yinc = 1; x+xinc < 8 && y+yinc < 8; xinc+=1, yinc+=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = 1, yinc = 1; x + xinc < 8 && y + yinc < 8; xinc += 1, yinc += 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -590,69 +718,81 @@ function startGame(gametype) {
             }
 
         } else if (type == 'g') { //Calculate king moves
-            
+
             //King can move in any direction for exactly one square
-            
+
             //Check vertical down
-            for(var xdir = -1; x+xdir >= 0 && x+xdir < 8; xdir-=1) {
-                
-                if(boardMap[x+xdir][y] == 'x') {
-                    result.push([x+xdir,y]);
-                } else if(boardMap[x+xdir][y] != 'x' && boardMap[x+xdir][y].includes(color)) {
+            for (var xdir = -1; x + xdir >= 0 && x + xdir < 8; xdir -= 1) {
+
+                if (boardMap[x + xdir][y] == 'x') {
+                    result.push([x + xdir, y]);
+                } else if (boardMap[x + xdir][y] != 'x' && boardMap[x + xdir][y].includes(color)) {
                     break;
-                } else if(boardMap[x+xdir][y] != 'x' && !boardMap[x+xdir][y].includes(color)) {
-                    result.push([x+xdir,y]);
+                } else if (boardMap[x + xdir][y] != 'x' && !boardMap[x + xdir][y].includes(color)) {
+                    if (boardMap[nextx][nexty].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x + xdir, y]);
                     break;
                 }
-                
+
                 //Terminate after one move calculated
                 break;
             }
-            
+
             //Check vertical up
-            for(var xdir = 1; x+xdir >= 0 && x+xdir < 8; xdir+=1) {
-                
-                if(boardMap[x+xdir][y] == 'x') {
-                    result.push([x+xdir,y]);
-                } else if(boardMap[x+xdir][y] != 'x' && boardMap[x+xdir][y].includes(color)) {
+            for (var xdir = 1; x + xdir >= 0 && x + xdir < 8; xdir += 1) {
+
+                if (boardMap[x + xdir][y] == 'x') {
+                    result.push([x + xdir, y]);
+                } else if (boardMap[x + xdir][y] != 'x' && boardMap[x + xdir][y].includes(color)) {
                     break;
-                } else if(boardMap[x+xdir][y] != 'x' && !boardMap[x+xdir][y].includes(color)) {
-                    result.push([x+xdir,y]);
+                } else if (boardMap[x + xdir][y] != 'x' && !boardMap[x + xdir][y].includes(color)) {
+                    if (boardMap[nextx][nexty].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x + xdir, y]);
                     break;
                 }
                 break;
             }
-            
+
             //Check horizontal left
-            for(var ydir = -1; y+ydir >= 0 && y+ydir < 8; ydir-=1) {
-                
-                if(boardMap[x][y+ydir] == 'x') {
-                    result.push([x, y+ydir]);
-                } else if(boardMap[x][y+ydir] != 'x' && !boardMap[x][y+ydir].includes(color)) {
-                    result.push([x, y+ydir]);
+            for (var ydir = -1; y + ydir >= 0 && y + ydir < 8; ydir -= 1) {
+
+                if (boardMap[x][y + ydir] == 'x') {
+                    result.push([x, y + ydir]);
+                } else if (boardMap[x][y + ydir] != 'x' && !boardMap[x][y + ydir].includes(color)) {
+                    if (boardMap[nextx][nexty].charAt(0) == 'g') {
+                        //TODO: check which color's king, display in game
+                        console.log("King is in check");
+                    }
+                    result.push([x, y + ydir]);
                     break;
                 }
                 break;
-            }            
-            
+            }
+
             //Check horizontal right
-            for(var ydir = 1; y+ydir >= 0 && y+ydir < 8; ydir+=1) {
-                
-                if(boardMap[x][y+ydir] == 'x') {
-                    result.push([x, y+ydir]);
-                } else if(boardMap[x, y+ydir] != 'x' && !boardMap[x][y+ydir].includes(color)) {
-                    result.push([x, y+ydir]);
+            for (var ydir = 1; y + ydir >= 0 && y + ydir < 8; ydir += 1) {
+
+                if (boardMap[x][y + ydir] == 'x') {
+                    result.push([x, y + ydir]);
+                } else if (boardMap[x, y + ydir] != 'x' && !boardMap[x][y + ydir].includes(color)) {
+                    result.push([x, y + ydir]);
                     break;
-                }
-                break;
+                } else break;
             }
             //Up Left
-            for(var xinc = -1, yinc = -1; x+xinc >= 0 && y+yinc >= 0; xinc-=1, yinc-=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = -1, yinc = -1; x + xinc >= 0 && y + yinc >= 0; xinc -= 1, yinc -= 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -664,14 +804,15 @@ function startGame(gametype) {
                 }
                 break;
             }
-            
+
             //Up Right
-            for(var xinc = -1, yinc = 1; x+xinc >= 0 && y+yinc < 8; xinc-=1, yinc+=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = -1, yinc = 1; x + xinc >= 0 && y + yinc < 8; xinc -= 1, yinc += 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -683,14 +824,15 @@ function startGame(gametype) {
                 }
                 break;
             }
-            
+
             //Down Left
-            for(var xinc = 1, yinc = -1; x+xinc < 8 && y+yinc >= 0; xinc+=1, yinc-=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = 1, yinc = -1; x + xinc < 8 && y + yinc >= 0; xinc += 1, yinc -= 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -702,14 +844,15 @@ function startGame(gametype) {
                 }
                 break;
             }
-            
+
             //Down Right
-            for(var xinc = 1, yinc = 1; x+xinc < 8 && y+yinc < 8; xinc+=1, yinc+=1) {
-                var nextx = x+xinc, nexty = y+yinc;
-                
-                if(boardMap[nextx][nexty] == 'x') {
+            for (var xinc = 1, yinc = 1; x + xinc < 8 && y + yinc < 8; xinc += 1, yinc += 1) {
+                var nextx = x + xinc,
+                    nexty = y + yinc;
+
+                if (boardMap[nextx][nexty] == 'x') {
                     result.push([nextx, nexty]);
-                } else if(!boardMap[nextx][nexty].includes(color)) {
+                } else if (!boardMap[nextx][nexty].includes(color)) {
                     if (boardMap[nextx][nexty].charAt(0) == 'g') {
                         //TODO: check which color's king, display in game
                         console.log("King is in check");
@@ -790,25 +933,26 @@ function startGame(gametype) {
 
         //If clicked piece is not already selected, highlight it and all of its moves, if it's not as an attack otherwise resetHighlights()
         var color = "white";
-        if(player == 1) color = "white";
+        if (player == 1) color = "white";
         else color = "black";
         if (!(selectedPiece[0] == x && selectedPiece[1] == y) && boardMap[x][y].includes(color)) {
-            
+
             if (selectPiece != []) resetHighlights();
             cells[pieceID].style.background = "#65d5e5";
             var type = boardMap[x][y].charAt(0);
             highlightMoves(type, x, y);
             selectedPiece = [x, y];
-            
-        } else if(!boardMap[x][y].includes(color)) {
-            
-            if(selectedPiece.length == 2) {
+
+        } else if (!boardMap[x][y].includes(color)) {
+
+            if (selectedPiece.length == 2) {
                 //Try to move piece as attack
-                var sPiecex = selectedPiece[0], sPiecey = selectedPiece[1];
+                var sPiecex = selectedPiece[0],
+                    sPiecey = selectedPiece[1];
                 var selectedPieceType = boardMap[sPiecex][sPiecey].charAt(0);
                 movePiece(boardMap, sPiecex, sPiecey, x, y);
             }
-            
+
         } else if (selectedPiece[0] == x && selectedPiece[1] == y) {
             resetHighlights();
             selectedPiece = [];
@@ -835,4 +979,15 @@ function startGame(gametype) {
         }
 
     }
+
+    //Gets clicks anywhere in the body and calls selectPiece() or selectPlace() if it corresponds to a game piece or cell on the board
+    document.querySelector('body').addEventListener('click', function (event) {
+        if (!paused) {
+            if (event.target.tagName.toLowerCase() === 'i' && event.target.classList.contains("piece")) {
+                selectPiece(event.target.getAttribute("id"));
+            } else if (event.target.className.toLowerCase() === 'cell') {
+                selectPlace(event.target.getAttribute("id"));
+            }
+        }
+    });
 }
