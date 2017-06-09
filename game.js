@@ -405,6 +405,7 @@ function startGame(gametype) {
             //Rook can move any amount of free spaces vertically or horizontally
 
             //Check vertical down
+
             for (var xdir = -1; x + xdir >= 0 && x + xdir < 8; xdir -= 1) {
 
                 if (boardMap[x + xdir][y] == 'x') {
@@ -420,6 +421,7 @@ function startGame(gametype) {
             }
 
             //Check vertical up
+
             for (var xdir = 1; x + xdir >= 0 && x + xdir < 8; xdir += 1) {
 
                 if (boardMap[x + xdir][y] == 'x') {
@@ -641,6 +643,7 @@ function startGame(gametype) {
                     break;
                 } else break;
             }
+            
             //Up Left
             for (var xinc = -1, yinc = -1; x + xinc >= 0 && y + yinc >= 0; xinc -= 1, yinc -= 1) {
                 var nextx = x + xinc,
