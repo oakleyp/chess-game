@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,31 +11,47 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="font-awesome-4.7.0/css/font-awesome.min.css">
 
-<title>Chess Game</title>
+    <title>Chess Game</title>
 
 </head>
+
 <body>
     <header>
-        <div id="logo-wrapper"><h1>JS Chess</h1></div>
-        
+        <div id="logo-wrapper">
+            <h1>JS Chess</h1>
+        </div>
+      
         <a href="#" id="menubtn">Menu Screen</a>
         <a href="http://github.com/oakleyp/" id="github">Github</a>
     </header>
-    
+
     <section id="menu-screen">
         <h2>Select a game mode below to start</h2>
         <button id="pvpbtn">Player vs. Player</button>
         <button id="pvcbtn">Player vs. Computer</button>
         <button id="cvcbtn">Computer vs. Computer</button>
     </section>
-    
+
     <section id="game-screen">
         
-        <div id="pturn-container">
-            <span>Player turn:&nbsp;</span><span id="pturn">White</span>
+        <div id="display-text-container"></div>
+
+        <div id="top-container">
+            <div id="pturn-container">
+                <span>Player turn:&nbsp;</span><span id="pturn">White</span>
+            </div>
+
+            <div id="timer-container">
+                <span id="timer">00:00:00</span>
+            </div>
+
+            <div id="pieces-taken-container">
+                <span id="pieces-taken">Taken:</span>
+                <ul id="pieces-list">
+                </ul>
+            </div>
         </div>
-        
-        <span id="timer"></span>
+
         <div id="board-container">
             <div id="board">
                 <div id="a8" class="cell">
@@ -231,7 +248,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div id="control-container">
             <button id="rewind"><i class="fa fa-fast-backward"></i></button>
             <button id="stepback"><i class="fa fa-reply"></i></button>
@@ -239,12 +256,12 @@
             <button id="stepforward"><i class="fa fa-share"></i></button>
             <button id="fastforward"><i class="fa fa-fast-forward"></i></button>
         </div>
-        
-        
     </section>
     
+    <script type="text/javascript" src="stopwatch.js"></script>
     <script type="text/javascript" src="game.js"></script>
     <script type="text/javascript" src="main.js"></script>
 
 </body>
+
 </html>
