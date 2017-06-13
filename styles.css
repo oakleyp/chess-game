@@ -19,13 +19,75 @@
     
 }
 
+@keyframes animateBg {
+    from {
+        background-color: #7ed1a1;
+        background-image: linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%, black), linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%, black);
+        background-size:85px 85px;
+        background-position:0 0, 30px 30px;
+    }
+    
+    10% {
+        background-color: #7ed1a1;
+        background-image: linear-gradient(75deg, #aaa 20%, transparent 75%, transparent 75%, transparent 75%, #aaa), linear-gradient(75deg, #aaa 20%, transparent 75%, transparent 75%, transparent 75%, #aaa);
+        background-size:95px 95px;
+        background-position:0 0, 20px 20px;
+    }
+    
+    20% {
+        background-color: #7ed1a1;
+        background-image: linear-gradient(75deg, #aaa 20%, transparent 80%, transparent 80%, transparent 80%, #aaa), linear-gradient(75deg, #aaa 20%, transparent 81%, transparent 81%, transparent 81%, #aaa);
+        background-size:105px 105px;
+        background-position:0 0, 10px 10px;
+    }
+    
+    30% {
+        background-color: #7ed1a1;
+        background-image: linear-gradient(135deg, #ddd 15%, transparent 85%, transparent 85%, transparent 75%, #ddd), linear-gradient(75deg, #ddd 15%, transparent 85%, transparent 85%, transparent 75%, #ddd);
+        background-size:115px 115px;
+        background-position:0 0, 0px 0px;
+    }
+    
+    80% {
+        background-color: #7ed1a1;
+        background-image: linear-gradient(135deg, #eee 8%, transparent 95%, transparent 95%, transparent 95%, #eee), linear-gradient(135deg, #eee 8%, transparent 95%, transparent 95%, transparent 95%, #eee);
+        background-size:150px 150px;
+        background-position:0 0, -10px -10px;
+    }
+    
+    to {
+        background-color: #7ed1a1;
+        background-image: linear-gradient(180deg, #eee 0%, transparent 100%, transparent 100%, transparent 100%, #ddd), linear-gradient(180deg, #ddd 0%, transparent 100%, transparent 100%, transparent 100%, #ddd);
+        background-size:180px 180px;
+        /*background: linear-gradient(to bottom, rgba(126,209,161,1) 0%,rgba(126,209,161,1) 50%,rgba(126,209,161,1) 69%,rgba(115,188,144,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    }
+}
+
+/*Checkerboard from http://lea.verou.me/css3patterns/#checkerboard */
 body {
     height: 100vh;
     padding: 0vh 0vw;
     text-align: center;
-    background: #7ed1a1;
+    background-color: #7ed1a1;
+    background-image: linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%, black), linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%, black);
+    background-size:85px 85px;
+    background-position:0 0, 30px 30px;
     font-family: 'Concert One', cursive;
+    -webkit-transition: background-color 1000ms linear;
+    -ms-transition: background-color 1000ms linear;
+    transition: background-color 1000ms linear;
 }
+
+.body-bg-shift {
+    animation-name: animateBg;
+    animation-duration: 0.3s; 
+    animation-play-state: running; 
+    background-image: none;
+    background-color: #7ed1a1;
+    /*background: linear-gradient(to bottom, rgba(126,209,161,1) 0%,rgba(126,209,161,1) 50%,rgba(126,209,161,1) 69%,rgba(115,188,144,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+
+/* Gradient background from http://www.colorzilla.com/gradient-editor/ */
 header {
     display: flex;
     flex-direction: row;
@@ -57,6 +119,7 @@ header {
     
     margin-right: 20vw;
 }
+
 h1 {
     font-size: 2em;
     margin-top: 2vh;
@@ -67,11 +130,13 @@ h1 {
     color: #FFF;
 }
 
-h2 {
+#menu-screen h2 {
     margin-top: 10vh;
     font-size: 1.5em;
     margin-bottom: 4vh;
+    color: #f9f9f9
 }
+
 #menubtn {
     margin-bottom: 2vh;
     margin-left: 33vw;
@@ -107,18 +172,32 @@ h2 {
 #menubtn:hover {
     background: rgba(32, 124, 202, 0.3);
 }
+#menu-btns-container {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    padding: 5vh 5vw; 
+}
 
-#menu-screen button {
-    margin-bottom: 3vh;
+#menu-btns-container button {
+    margin-bottom: 6vh;
     font-size: 1.1em;
     padding: 2vh 1vw;
     background: #ddd;
     border: 1px solid #111;
+    border-radius: 8px;
 }
 
 
 #menu-screen {
     /*TODO: set up JS to change visibility */
+    background: #333;
+    padding: 5vh 10vw;
+    padding-top: 1vh;
+    border-radius: 20px;
+    border: 1px solid #666;
+    box-shadow: -1px 2px 2px #000;
+    margin: 10vh 10vw;
 }
 
 #game-screen {
@@ -336,10 +415,73 @@ h2 {
   }
 }
 
+@keyframes flipinout {
+  from {
+    opacity: 0;
+    transform: perspective(400px) rotate3d(0, 1, 0, -360deg);
+    animation-timing-function: ease-out;
+    visibility: visible;
+    position: absolute;
+    top: 45%;
+      right: 45%;
+    z-index: 997;
+  }
+
+  30% {
+    opacity: 0.5;
+    transform: perspective(400px) translate3d(0, 0, 150px) rotate3d(0, 1, 0, -190deg);
+    animation-timing-function: ease-out;
+      top: 45%;
+      right: 45%;
+  }
+
+  40% {
+    opacity: 0.9;
+    transform: perspective(400px) translate3d(0, 0, 150px) rotate3d(0, 1, 0, -170deg);
+    animation-timing-function: ease-in;
+      top: 45%;
+      right: 45%;
+  }
+
+  70% {
+    opacity:1;
+    transform: perspective(400px) scale3d(.95, .95, .95);
+    animation-timing-function: ease-in;
+    position: absolute;
+    top: 45%;
+      right: 40%;
+    z-index: 997;
+  }
+
+  to {
+    opacity: 0.9;
+    transform: perspective(400px);
+    animation-timing-function: ease-in;
+    visibility: hidden;
+      position: absolute;
+      bottom: 0;
+      right: 0;
+    z-index: -5;
+
+  }
+}
+
 .flip {
     visibility: visible;
     animation-name: flip;
     animation-duration: 1.5s; 
     animation-play-state: running; 
+}
+
+.flipinout {
+    visibility: hidden;
+    animation-name: flipinout;
+    animation-duration: 1.5s; 
+    animation-play-state: running; 
+    position: absolute;
+      bottom: 0;
+      right: 0;
+    z-index: -5;
+    text-shadow: 1px 1px #000;
 }
 
