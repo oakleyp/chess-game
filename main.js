@@ -1,15 +1,26 @@
 "use strict";
 
+var body = document.querySelector('body');
 var pvpBtn = document.getElementById('pvpbtn');
+var pvcBtn = document.getElementById('pvcbtn');
 var menuDiv = document.getElementById('menu-screen');
 var gameDiv = document.getElementById('game-screen');
 var menuBtn = document.getElementById('menubtn');
 var pauseplayBtn = document.getElementById('pauseplay');
 
+
 pvpBtn.addEventListener('click', function () {
     menuDiv.style.display = "none";
     gameDiv.style.visibility = "visible";
+    body.classList.add("body-bg-shift");
     startGame("pvp");
+});
+
+pvcBtn.addEventListener('click', function () {
+    menuDiv.style.display = "none";
+    gameDiv.style.visibility = "visible";
+    body.classList.add("body-bg-shift");
+    startGame("pvc");
 });
 
 menuBtn.addEventListener('click', function () {
@@ -17,6 +28,8 @@ menuBtn.addEventListener('click', function () {
         location.reload();
     }
 });
+
+
 
 /*===============================================================================*/
 /* -------------- Control button handler functions ----------------------------- */

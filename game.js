@@ -2,6 +2,9 @@
 
 var paused = false;
 
+//Stores boardMap x,y of king in check
+var inCheck = [];
+
 let stopwatch = new StopWatch(document.getElementById('timer'));
 
 function startTimer() {
@@ -18,10 +21,15 @@ function startGame(gametype) {
     var board = document.getElementById('board');
     var cells = document.getElementsByClassName('cell');
     var pturn = document.getElementById('pturn');
-    var taken = document.getElementById('pieces-list');
+    var takenDiv = document.getElementById('pieces-list');
+    var backBtn = document.getElementById('stepback');
+    var forwardBtn = document.getElementById('stepforward');
+    let chessbot;
+
     var player = 1;
 
     startTimer();
+    displayText('Start!', 'flipinout');
 
 
     //Declare and initialize 2D array to store positions of all pieces on board, 0-7 right to left indexes containing 0-7 up and down for rows and columns, respectively.
@@ -30,11 +38,15 @@ function startGame(gametype) {
         boardMap[i] = ["x", "x", "x", "x", "x", "x", "x", "x"];
     }
 
-    //Stores a list of all boardMaps at every point a piece changes position during the game
-    var gameStates = [];
+    //Stores a list of all boardMaps at every point a piece changes position during the game as a 3d array
+    var gameStates = new Array(8);
+    gameStates[0] = new Array(8);
+    gameStates[0][0] = new Array(8);
+    gameStates[0][0][0] = 'x';
 
-    //Stores a list of all takenPieces[] at every point a piece is taken
-    var pieceStates = [];
+
+    //Stores current gameState counter
+    var gameStateCount = 0;
 
     //Stores the currently selected piece's x([0]), y([1]) coordinates
     var selectedPiece = [];
@@ -42,20 +54,26 @@ function startGame(gametype) {
     //Stores taken pieces from both teams
     var takenPieces = [];
 
+    //Stores a list of all takenPieces[] at every point a piece is taken as a 2d array
+    var takenStates = [];
+
+    //Stores current takenState counter 
+    var takenStateCount = 0;
+
     //Array to store initial player1 pieces
-    var p1pieces = ['rwhite', 'kwhite', 'bwhite', 'qwhite', 'gwhite', 'bwhite', 'kwhite', 'rwhite',
-                'pwhite', 'pwhite', 'pwhite', 'pwhite', 'pwhite', 'pwhite', 'pwhite', 'pwhite'];
+    var p1pieces = ['rwhite1', 'kwhite1', 'bwhite1', 'qwhite1', 'gwhite1', 'bwhite2', 'kwhite2', 'rwhite2',
+                'pwhite1', 'pwhite2', 'pwhite3', 'pwhite4', 'pwhite5', 'pwhite6', 'pwhite7', 'pwhite8'];
 
     //Array to store initial player2 pieces
-    var p2pieces = ['pblack', 'pblack', 'pblack', 'pblack', 'pblack', 'pblack', 'pblack', 'pblack',
-                'rblack', 'kblack', 'bblack', 'qblack', 'gblack', 'bblack', 'kblack', 'rblack'];
+    var p2pieces = ['pblack1', 'pblack2', 'pblack3', 'pblack4', 'pblack5', 'pblack6', 'pblack7', 'pblack8',
+                'rblack1', 'kblack1', 'bblack1', 'qblack1', 'gblack1', 'bblack2', 'kblack2', 'rblack2'];
 
 
     // set board cell bgs to alternating color and place p1 and p2 game pieces in initial location in boardMap
     var x = 0;
     var xadjust = 0;
     for (var i = 0; i < cells.length; i += 1) {
-        //8 columns per row, starting at 0-7. if the index is the 8th, increment the row counter x where i is the column counter
+        //8 columns per row, starting at 0-7. if the index is the 8th, increment the column counter x where i is the row counter
         if (i % 8 == 0 && i != 0) {
             x += 1;
             xadjust += 8;
@@ -80,7 +98,14 @@ function startGame(gametype) {
 
     }
 
-    console.dir(boardMap);
+    //If it's user vs. computer, start the bot now that the map is set up
+    if (gametype == "pvc") {
+        chessbot = new ChessBot(boardMap, "black");
+    }
+
+    //TODO: cpu v cpu
+
+    //console.dir(boardMap);
 
     //Prints the current player's turn to html id 'pturn'
     function printTurn() {
@@ -136,31 +161,39 @@ function startGame(gametype) {
             }
         }
     }
-    
+
     //Displays specified text on screen with a specified animation inside DIV id='display-text-container'
     function displayText(text, animationclass) {
-        switch(animationclass) {
+        var container = document.getElementById('display-text-container');
+        var elem = document.createElement("h1");
+
+        //Clear other elements first so they don't overlap
+        var matchNodes = container.getElementsByClassName('display-text-center');
+        if (matchNodes.length > 0)
+            container.removeChild(matchNodes[0]);
+
+        //Set element text and class
+        elem.innerHTML = text;
+        elem.classList.add('display-text-center');
+
+        switch (animationclass) {
             default:
-            case 'flip':
-                var container = document.getElementById('display-text-container');
-                var elem = document.createElement("h1");
-                elem.innerHTML = text;
-                elem.classList.add('display-text-center');
+                case 'flip':
                 elem.classList.add('flip');
-                
-                //Clear other elements first so they don't overlap
-                var matchNodes = container.getElementsByClassName('display-text-center');
-                if(matchNodes.length > 0)
-                    container.removeChild(matchNodes[0]);
-                
+            container.appendChild(elem);
+            break;
+
+            case 'flipinout':
+                    elem.classList.add('flipinout');
                 container.appendChild(elem);
-            }
+                break;
+        }
     }
-    
+
     //Prints taken pieces, given array takenPieces[], to DOM element 'pieces-list'
     function printTaken(takenPieces) {
         //Clear taken pieces from display 
-        taken.innerHTML = "";
+        takenDiv.innerHTML = "";
 
         //Convert nodelist to array as copy
         var pieces = Array.from(takenPieces);
@@ -172,7 +205,8 @@ function startGame(gametype) {
         //Check for duplicate pieces in printqueue, and if existent, increment the counter
         for (var i = 0; i < pieces.length; i++) {
             var dupe = false;
-            var queuedItem = pieces[i];
+            //Replace char at end for comparison
+            var queuedItem = pieces[i].substr(0, pieces[i].length - 1);
             for (var x = 0; x < printQueue.length; x++) {
                 if (printQueue[x][0] == queuedItem) {
                     printQueue[x][1] += 1;
@@ -189,7 +223,7 @@ function startGame(gametype) {
             var newItem = document.createElement("li");
             newItem.innerHTML = displayStr;
             console.log("piece taken - display: " + newItem.innerHTML);
-            taken.appendChild(newItem);
+            takenDiv.appendChild(newItem);
         }
     }
 
@@ -213,6 +247,17 @@ function startGame(gametype) {
         }
 
     }
+
+    //Push the initial gameState and increment counter
+    gameStates[gameStateCount] = new Array(8);
+    for (var xi = 0; xi < 8; xi++) {
+        gameStates[gameStateCount][xi] = new Array(8);
+        for (var yi = 0; yi < 8; yi++) {
+            gameStates[gameStateCount][xi][yi] = boardMap[xi][yi];
+        }
+    }
+    gameStateCount++;
+
 
     //Prints the pieces in their initial positions on the board
     printBoard(boardMap);
@@ -265,84 +310,138 @@ function startGame(gametype) {
         return [x, y];
     }
 
-    //Moves a piece from the specified x,y coordinates to the specified newx,newy coordinates
-    function movePiece(boardMap, x, y, newx, newy) {
-        //Add current boardMap to gameStates
-        gameStates.push(boardMap);
+    //Returns true if player's move puts their own king into check
+    function isMoveIntoCheck(boardMap, color, x, y, newx, newy) {
+        //Get king's position after performing player move on a mock map
+        var mockMap = boardMap.map(o => Object.assign({}, o));
+        var piece = mockMap[x][y];
+        var kingxy = [];
 
-        var color = "white";
-        if (boardMap[x][y].includes("white")) {
-            color = "white";
-        } else if (boardMap[x][y].includes("black")) {
-            color = "black";
-        }
+        mockMap[x][y] = 'x';
+        mockMap[newx][newy] = piece;
 
-        //Make sure own pieces can't be taken
-        if (color == "white" && boardMap[newx][newy].includes("white")) {
-            console.log("Can't take own piece.");
-        } else if (color == "black" && boardMap[newx][newy].includes("black")) {
-            console.log("Can't take own piece.");
+        //If its a king moving, it's not much of a mystery
+        if (piece.charAt(0) == 'g') kingxy = [newx, newy];
+        else { //For the other 15/16 times, find the specified color's king x and y
+            for (var xi = 0; xi < 7; xi++) {
+                for (var yi = 0; yi < 7; yi++) {
+                    if (mockMap[xi][yi].charAt(0) == 'g' && mockMap[xi][yi].includes(color)) kingxy = [xi, yi];
+                }
+            }
         }
+        var oppColor = (color == "black") ? "white" : "black";
+        var opponentMovesToKing = calcMovesToKing(mockMap, kingxy[0], kingxy[1], color);
+
+        if (opponentMovesToKing != null) {
+            console.log("Invalid - Move puts king into check.");
+            return true;
+        } else return false;
+
+    }
+
+    //Returns false if not a checkmate, ends game and returns true otherwise
+    function isCheckMate(boardMap, color, x, y) {
+        var movesOutOfCheck = calcMovesOutofCheck(boardMap, inCheck[0], inCheck[1]);
+        if (movesOutOfCheck != null) {
+            return false;
+        } else if (movesOutOfCheck == null) {
+            //That's a hard checkmate baby
+            console.log("Checkmate");
+            if (color == "black") {
+                displayText("White Wins!!!", "flip");
+                stopTimer();
+                return true;
+            } else {
+                displayText("Black Wins!!!", "flip");
+                stopTimer();
+                return true;
+            }
+
+        }
+        return true;
+
+    }
+
+
+    //Returns true if a move is valid
+    function isValidMove(boardMap, color, x, y, newx, newy) {
+        var valid = false;
 
         var piece = boardMap[x][y];
         var moves = calcMoves(piece.charAt(0), boardMap, x, y);
-        var valid = false;
 
         //See if requested move is valid
         for (var i = 0; i < moves.length; i += 1) {
             if (moves[i][0] == newx && moves[i][1] == newy) {
                 valid = true;
+                break;
             }
         }
 
-        if (valid) {
-            //Check if piece was taken, if so, refresh taken display
-            if (boardMap[newx][newy] != 'x') {
-                //See if there's a winner
-                if(boardMap[newx][newy].charAt(0) == 'g') {
-                    //King taken, determine and display winning team
-                    if(boardMap[x][y].includes("black")) {
-                        displayText("Black Wins!!!", "flip");
-                        stopTimer();
-                    } else if(boardMap[x][y].includes("white")) {
-                        displayText("White Wins!!!", "flip");
-                        stopTimer();
+        if (valid && isMoveIntoCheck(boardMap, color, x, y, newx, newy)) return false;
+
+        //If in check, see if move gets player out of check, otherwise show invalid
+        // If there are no moves that get player out of check, show checkmate and end game.
+        if (typeof (inCheck[0]) != 'undefined' && valid) {
+
+            var movesOutOfCheck = calcMovesOutofCheck(boardMap, inCheck[0], inCheck[1]);
+            if (movesOutOfCheck != null) {
+                for (var xi = 0; xi < movesOutOfCheck.length && typeof (movesOutOfCheck[xi][0]) != 'undefined'; xi++) {
+                    if (movesOutOfCheck[xi][0][0] == x && movesOutOfCheck[xi][0][1] == y) {
+                        console.log("Moves out of check for this piece found at: ");
+                        console.dir(movesOutOfCheck[xi][0]);
+                        console.dir(movesOutOfCheck[xi][1]);
+                        if (movesOutOfCheck[xi][1][0] == newx && movesOutOfCheck[xi][1][1] == newy) {
+                            inCheck = [];
+                            return true;
+                        } else if (typeof (movesOutOfCheck[xi + 1]) == 'undefined') {
+                            console.log("Invalid move, king will still be in check.");
+                            return false;
+                        }
                     }
                 }
-                takenPieces.push(boardMap[newx][newy]);
-                pieceStates.push(takenPieces);
-                printTaken(takenPieces);
+                return false;
+            } else if (movesOutOfCheck == null) {
+                //If somehow it wasn't caught already, death was cheated
+                if (isCheckMate) return false;
             }
-
-            boardMap[x][y] = 'x';
-            boardMap[newx][newy] = piece;
-
-            //Switch players and reset
-            if (player == 1) player = 2;
-            else player = 1;
-            printTurn();
-            printBoard(boardMap);
-            resetHighlights();
-            selectedPiece = [];
-        } else {
-            console.log("Invalid move.");
-            gameStates.pop();
         }
 
-
+        return valid;
     }
 
-    //Returns all of a pieces' available moves as a 2d array of x,y coordinates 
-    function calcMoves(type, boardMap, x, y) {
+    //Moves a piece from the specified x,y coordinates to the specified newx,newy coordinates
+    function movePiece(boardMap, x, y, newx, newy) {
+        var piece = boardMap[x][y];
+        var color = "white";
+        var oppColor = "black";
+        var taken = false;
 
-        var color = "white"; //Color of currently selected piece
-
-        if (boardMap[x][y].includes("white")) {
+        if (piece.includes("white")) {
             color = "white";
-        } else if (boardMap[x][y].includes("black")) {
+        } else if (piece.includes("black")) {
             color = "black";
+            oppColor = "white";
         }
 
+<<<<<<< HEAD
+        //If own piece is selected, change focus, maybe make castling an option in the future
+        if (color == "white" && boardMap[newx][newy].includes("white")) {
+            resetHighlights();
+            cells[getCellIndex(x, y)].style.background = "#65d5e5";
+            var type = boardMap[x][y].charAt(0);
+            highlightMoves(type, x, y);
+            selectedPiece = [x, y];
+            return;
+        } else if (color == "black" && boardMap[newx][newy].includes("black")) {
+            resetHighlights();
+            cells[getCellIndex(x, y)].style.background = "#65d5e5";
+            var type = boardMap[x][y].charAt(0);
+            highlightMoves(type, x, y);
+            selectedPiece = [x, y];
+            return;
+        }
+=======
         var result = [];
 
         if (type == 'p') { //Calculate pawn moves
@@ -726,150 +825,68 @@ function startGame(gametype) {
 
             //Check vertical down
             for (var xdir = -1; x + xdir >= 0 && x + xdir < 8; xdir -= 1) {
+>>>>>>> b7349b6f298e4685d29c057dca67a471af95546b
 
-                if (boardMap[x + xdir][y] == 'x') {
-                    result.push([x + xdir, y]);
-                } else if (boardMap[x + xdir][y] != 'x' && boardMap[x + xdir][y].includes(color)) {
-                    break;
-                } else if (boardMap[x + xdir][y] != 'x' && !boardMap[x + xdir][y].includes(color)) {
-                    if (boardMap[nextx][nexty].charAt(0) == 'g') {
-                        //TODO: check which color's king, display in game
-                        console.log("King is in check");
+        if (isValidMove(boardMap, color, x, y, newx, newy)) {
+
+            //Check if piece was taken, if so, refresh taken display
+            if (boardMap[newx][newy] != 'x') {
+                taken = true;
+                takenPieces.push(boardMap[newx][newy]);
+                printTaken(takenPieces);
+            }
+
+            boardMap[x][y] = 'x';
+            boardMap[newx][newy] = piece;
+
+            if (!taken) {
+                //Add current boardMap to gameStates
+                gameStates[gameStateCount] = new Array(8);
+                for (var xi = 0; xi < 8; xi++) {
+                    gameStates[gameStateCount][xi] = new Array(8);
+                    for (var yi = 0; yi < 8; yi++) {
+                        gameStates[gameStateCount][xi][yi] = boardMap[xi][yi];
                     }
-                    result.push([x + xdir, y]);
+                }
+                //gameStates[gameStateCount].push(boardMap);
+                gameStateCount += 1;
+            }
+
+
+            //Switch players and reset
+            if (player == 1) player = 2;
+            else player = 1;
+            printTurn();
+            printBoard(boardMap);
+            resetHighlights();
+            selectedPiece = [];
+
+
+
+            //Check if move puts a player in check and highlight cells if so
+            console.log(`Calculating next moves at x,y: ${newx}, ${newy}`)
+            var nextMoves = calcMoves(boardMap[newx][newy].charAt(0), boardMap, newx, newy);
+            console.dir(nextMoves);
+            for (var xi = 0; xi < nextMoves.length; xi++) {
+                //See if any of next possible moves puts king into check
+                if (boardMap[nextMoves[xi][0]][nextMoves[xi][1]].charAt(0) == 'g') {
+                    displayText("Check", "flipinout");
+                    inCheck = [nextMoves[xi][0], nextMoves[xi][1]];
+
+                    //End game if a check mate
+                    if (isCheckMate(boardMap, oppColor, inCheck[0], inCheck[1])) return;
+
+                    highlightCells(nextMoves);
+                    console.log("King is in check");
                     break;
                 }
-
-                //Terminate after one move calculated
-                break;
             }
-
-            //Check vertical up
-            for (var xdir = 1; x + xdir >= 0 && x + xdir < 8; xdir += 1) {
-
-                if (boardMap[x + xdir][y] == 'x') {
-                    result.push([x + xdir, y]);
-                } else if (boardMap[x + xdir][y] != 'x' && boardMap[x + xdir][y].includes(color)) {
-                    break;
-                } else if (boardMap[x + xdir][y] != 'x' && !boardMap[x + xdir][y].includes(color)) {
-                    if (boardMap[nextx][nexty].charAt(0) == 'g') {
-                        //TODO: check which color's king, display in game
-                        console.log("King is in check");
-                    }
-                    result.push([x + xdir, y]);
-                    break;
-                }
-                break;
-            }
-
-            //Check horizontal left
-            for (var ydir = -1; y + ydir >= 0 && y + ydir < 8; ydir -= 1) {
-
-                if (boardMap[x][y + ydir] == 'x') {
-                    result.push([x, y + ydir]);
-                } else if (boardMap[x][y + ydir] != 'x' && !boardMap[x][y + ydir].includes(color)) {
-                    if (boardMap[nextx][nexty].charAt(0) == 'g') {
-                        //TODO: check which color's king, display in game
-                        console.log("King is in check");
-                    }
-                    result.push([x, y + ydir]);
-                    break;
-                }
-                break;
-            }
-
-            //Check horizontal right
-            for (var ydir = 1; y + ydir >= 0 && y + ydir < 8; ydir += 1) {
-
-                if (boardMap[x][y + ydir] == 'x') {
-                    result.push([x, y + ydir]);
-                } else if (boardMap[x, y + ydir] != 'x' && !boardMap[x][y + ydir].includes(color)) {
-                    result.push([x, y + ydir]);
-                    break;
-                } else break;
-            }
-            //Up Left
-            for (var xinc = -1, yinc = -1; x + xinc >= 0 && y + yinc >= 0; xinc -= 1, yinc -= 1) {
-                var nextx = x + xinc,
-                    nexty = y + yinc;
-
-                if (boardMap[nextx][nexty] == 'x') {
-                    result.push([nextx, nexty]);
-                } else if (!boardMap[nextx][nexty].includes(color)) {
-                    if (boardMap[nextx][nexty].charAt(0) == 'g') {
-                        //TODO: check which color's king, display in game
-                        console.log("King is in check");
-                    }
-                    result.push([nextx, nexty]);
-                    break;
-                } else {
-                    break;
-                }
-                break;
-            }
-
-            //Up Right
-            for (var xinc = -1, yinc = 1; x + xinc >= 0 && y + yinc < 8; xinc -= 1, yinc += 1) {
-                var nextx = x + xinc,
-                    nexty = y + yinc;
-
-                if (boardMap[nextx][nexty] == 'x') {
-                    result.push([nextx, nexty]);
-                } else if (!boardMap[nextx][nexty].includes(color)) {
-                    if (boardMap[nextx][nexty].charAt(0) == 'g') {
-                        //TODO: check which color's king, display in game
-                        console.log("King is in check");
-                    }
-                    result.push([nextx, nexty]);
-                    break;
-                } else {
-                    break;
-                }
-                break;
-            }
-
-            //Down Left
-            for (var xinc = 1, yinc = -1; x + xinc < 8 && y + yinc >= 0; xinc += 1, yinc -= 1) {
-                var nextx = x + xinc,
-                    nexty = y + yinc;
-
-                if (boardMap[nextx][nexty] == 'x') {
-                    result.push([nextx, nexty]);
-                } else if (!boardMap[nextx][nexty].includes(color)) {
-                    if (boardMap[nextx][nexty].charAt(0) == 'g') {
-                        //TODO: check which color's king, display in game
-                        console.log("King is in check");
-                    }
-                    result.push([nextx, nexty]);
-                    break;
-                } else {
-                    break;
-                }
-                break;
-            }
-
-            //Down Right
-            for (var xinc = 1, yinc = 1; x + xinc < 8 && y + yinc < 8; xinc += 1, yinc += 1) {
-                var nextx = x + xinc,
-                    nexty = y + yinc;
-
-                if (boardMap[nextx][nexty] == 'x') {
-                    result.push([nextx, nexty]);
-                } else if (!boardMap[nextx][nexty].includes(color)) {
-                    if (boardMap[nextx][nexty].charAt(0) == 'g') {
-                        //TODO: check which color's king, display in game
-                        console.log("King is in check");
-                    }
-                    result.push([nextx, nexty]);
-                    break;
-                } else {
-                    break;
-                }
-                break;
-            }
+        } else {
+            console.log("Invalid move.");
+            /*gameStates.pop();
+            gameStateCount-=1;*/
         }
 
-        return result;
 
     }
 
@@ -938,28 +955,52 @@ function startGame(gametype) {
         var color = "white";
         if (player == 1) color = "white";
         else color = "black";
-        if (!(selectedPiece[0] == x && selectedPiece[1] == y) && boardMap[x][y].includes(color)) {
 
-            if (selectPiece != []) resetHighlights();
-            cells[pieceID].style.background = "#65d5e5";
-            var type = boardMap[x][y].charAt(0);
-            highlightMoves(type, x, y);
-            selectedPiece = [x, y];
+        if (gametype == "pvp" || player == 1) {
+            if (!(selectedPiece[0] == x && selectedPiece[1] == y) && boardMap[x][y].includes(color)) {
 
-        } else if (!boardMap[x][y].includes(color)) {
+                if (selectedPiece != []) resetHighlights();
+                cells[pieceID].style.background = "#65d5e5";
+                var type = boardMap[x][y].charAt(0);
+                highlightMoves(type, x, y);
+                selectedPiece = [x, y];
 
-            if (selectedPiece.length == 2) {
-                //Try to move piece as attack
-                var sPiecex = selectedPiece[0],
-                    sPiecey = selectedPiece[1];
-                var selectedPieceType = boardMap[sPiecex][sPiecey].charAt(0);
-                movePiece(boardMap, sPiecex, sPiecey, x, y);
+            } else if (!boardMap[x][y].includes(color)) {
+
+                if (selectedPiece.length == 2) {
+                    //Try to move piece as attack
+                    var sPiecex = selectedPiece[0],
+                        sPiecey = selectedPiece[1];
+                    var selectedPieceType = boardMap[sPiecex][sPiecey].charAt(0);
+                    movePiece(boardMap, sPiecex, sPiecey, x, y);
+
+                    if (gametype == "pvc") {
+                        var move = chessbot.getMove(boardMap);
+                        console.log("Chessbot move:");
+                        console.dir(move);
+                        var fromx = move[0][0],
+                            fromy = move[0][1],
+                            tox = move[1][0],
+                            toy = move[1][1];
+
+                        movePiece(boardMap, fromx, fromy, tox, toy);
+                        printTurn();
+                        printBoard(boardMap);
+                        resetHighlights();
+                        selectedPiece = [];
+                        //Switch players and reset
+                        if (player == 2) player = 1;
+                        else player = 1;
+                    }
+                }
+
+            } else if (selectedPiece[0] == x && selectedPiece[1] == y) {
+                resetHighlights();
+                selectedPiece = [];
             }
 
-        } else if (selectedPiece[0] == x && selectedPiece[1] == y) {
-            resetHighlights();
-            selectedPiece = [];
         }
+
 
     }
 
@@ -976,6 +1017,25 @@ function startGame(gametype) {
             } else {
                 //TODO: try to move piece to selected cell, take piece if necessary
                 movePiece(boardMap, selectedPiece[0], selectedPiece[1], x, y);
+
+                if (gametype == "pvc") {
+                    var move = chessbot.getMove(boardMap);
+                    console.log("Chessbot move:");
+                    console.dir(move);
+                    var fromx = move[0][0],
+                        fromy = move[0][1],
+                        tox = move[1][0],
+                        toy = move[1][1];
+
+                    movePiece(boardMap, fromx, fromy, tox, toy);
+                    printTurn();
+                    printBoard(boardMap);
+                    resetHighlights();
+                    selectedPiece = [];
+                    //Switch players and reset
+                    if (player == 2) player = 1;
+                    else player = 1;
+                }
             }
         } else if (boardMap[x][y] != 'x') {
             selectPiece("piece" + getCellIndex(x, y));
@@ -991,6 +1051,47 @@ function startGame(gametype) {
             } else if (event.target.className.toLowerCase() === 'cell') {
                 selectPlace(event.target.getAttribute("id"));
             }
+        }
+    });
+
+    //Step back button handler
+    document.getElementById('stepback').addEventListener('click', function () {
+        //console.dir(gameStates[gameStateCount-1]);
+        if (gameStateCount >= 1 && typeof (gameStates[gameStateCount - 1]) != 'undefined') {
+            gameStateCount = gameStateCount - 1;
+            console.log("Step back: Game state count - from: " + (1 + gameStateCount) + ", to: " + gameStateCount);
+            //Set the boardMap to one step back and print the board
+            boardMap = gameStates[gameStateCount];
+
+            //Switch players and reset
+            if (player == 1 && gameStateCount != 0) player = 2;
+            else player = 1;
+            printTurn();
+            printBoard(gameStates[gameStateCount]);
+            resetHighlights();
+            selectedPiece = [];
+        }
+    });
+
+    //Step forward button event handler
+    document.getElementById('stepforward').addEventListener('click', function () {
+        //console.dir(gameStates[gameStateCount+1]);
+        console.log("Step forward: Game state count: " + gameStateCount);
+        if (typeof (gameStates[gameStateCount + 1]) != 'undefined') {
+            gameStateCount = gameStateCount + 1;
+            console.log("Step forward: Game state count: " + gameStateCount);
+            console.log("game states length: " + gameStates.length);
+            //Set the boardMap to one step back and print the board
+            boardMap = gameStates[gameStateCount];
+
+
+            //Switch players and reset
+            if (player == 1) player = 2;
+            else player = 1;
+            printTurn();
+            printBoard(gameStates[gameStateCount]);
+            resetHighlights();
+            selectedPiece = [];
         }
     });
 }
