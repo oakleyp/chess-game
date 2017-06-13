@@ -424,7 +424,6 @@ function startGame(gametype) {
             oppColor = "white";
         }
 
-<<<<<<< HEAD
         //If own piece is selected, change focus, maybe make castling an option in the future
         if (color == "white" && boardMap[newx][newy].includes("white")) {
             resetHighlights();
@@ -441,7 +440,6 @@ function startGame(gametype) {
             selectedPiece = [x, y];
             return;
         }
-=======
         var result = [];
 
         if (type == 'p') { //Calculate pawn moves
@@ -825,7 +823,6 @@ function startGame(gametype) {
 
             //Check vertical down
             for (var xdir = -1; x + xdir >= 0 && x + xdir < 8; xdir -= 1) {
->>>>>>> b7349b6f298e4685d29c057dca67a471af95546b
 
         if (isValidMove(boardMap, color, x, y, newx, newy)) {
 
