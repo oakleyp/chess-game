@@ -20,16 +20,18 @@
         <div id="logo-wrapper">
             <h1>JS Chess</h1>
         </div>
-      
+
         <a href="#" id="menubtn">Menu Screen</a>
         <a href="http://github.com/oakleyp/" id="github">Github</a>
     </header>
 
     <section id="menu-screen">
         <h2>Select a game mode below to start</h2>
-        <button id="pvpbtn">Player vs. Player</button>
-        <button id="pvcbtn">Player vs. Computer</button>
-        <button id="cvcbtn">Computer vs. Computer</button>
+        <div id="menu-btns-container">
+            <button id="pvpbtn">Player vs. Player</button>
+            <button id="pvcbtn">Player vs. Computer</button>
+            <button id="cvcbtn">Computer vs. Computer</button>
+        </div>
     </section>
 
     <section id="game-screen">
@@ -256,9 +258,13 @@
             <button id="stepforward"><i class="fa fa-share"></i></button>
             <button id="fastforward"><i class="fa fa-fast-forward"></i></button>
         </div>
+
+
     </section>
     
     <script type="text/javascript" src="stopwatch.js"></script>
+    <script type="text/javascript" src="calc.js"></script>
+    <script type="text/javascript" src="ai.js"></script>
     <script type="text/javascript" src="game.js"></script>
     <script type="text/javascript" src="main.js"></script>
 
