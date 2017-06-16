@@ -431,14 +431,14 @@ function startGame(gametype) {
             var type = boardMap[x][y].charAt(0);
             highlightMoves(type, x, y);
             selectedPiece = [x, y];
-            return;
+            return false;
         } else if (color == "black" && boardMap[newx][newy].includes("black")) {
             resetHighlights();
             cells[getCellIndex(x, y)].style.background = "#65d5e5";
             var type = boardMap[x][y].charAt(0);
             highlightMoves(type, x, y);
             selectedPiece = [x, y];
-            return;
+            return false;
         }
 
         if (isValidMove(boardMap, color, x, y, newx, newy)) {
@@ -452,6 +452,11 @@ function startGame(gametype) {
 
             boardMap[x][y] = 'x';
             boardMap[newx][newy] = piece;
+            
+            //Update map for chessbot
+            if(gametype == "pvc") {
+                chessbot.pushMap(boardMap);
+            }
 
             if (!taken) {
                 //Add current boardMap to gameStates
@@ -486,17 +491,25 @@ function startGame(gametype) {
                 if (boardMap[nextMoves[xi][0]][nextMoves[xi][1]].charAt(0) == 'g') {
                     displayText("Check", "flipinout");
                     inCheck = [nextMoves[xi][0], nextMoves[xi][1]];
+                    
+                    //Notify chessbot it is in check
+                    if(gametype == "pvc") {
+                        chessbot.setInCheck(true);
+                    }
 
                     //End game if a check mate
-                    if (isCheckMate(boardMap, oppColor, inCheck[0], inCheck[1])) return;
+                    if (isCheckMate(boardMap, oppColor, inCheck[0], inCheck[1])) return false;
 
                     highlightCells(nextMoves);
                     console.log("King is in check");
                     break;
                 }
             }
+            
+            return true;
         } else {
             console.log("Invalid move.");
+            return false;
             /*gameStates.pop();
             gameStateCount-=1;*/
         }
@@ -589,9 +602,7 @@ function startGame(gametype) {
                     movePiece(boardMap, sPiecex, sPiecey, x, y);
 
                     if (gametype == "pvc") {
-                        var move = chessbot.getMove(boardMap);
-                        console.log("Chessbot move:");
-                        console.dir(move);
+                        var move = chessbot.getMove();
                         var fromx = move[0][0],
                             fromy = move[0][1],
                             tox = move[1][0],
