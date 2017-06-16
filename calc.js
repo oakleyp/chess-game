@@ -28,6 +28,7 @@ function calcMoves(type, map, x, y, color) {
     }
 
     var result = [];
+    
 
     if (type == 'p') { //Calculate pawn moves
 
@@ -63,10 +64,6 @@ function calcMoves(type, map, x, y, color) {
         //Show takeouts diagonally
         if ((x + xdirection >= 0 && x + xdirection < 8) && (y + 1 >= 0 && y + 1 < 8)) {
             if (map[x + xdirection][y + 1] != 'x' && !map[x + xdirection][y + 1].includes(color)) {
-                if (map[x + xdirection][y + 1].charAt(0) == 'g') {
-                    //TODO: check which color's king, display in game
-                    //console.log("King is in check");
-                }
 
                 result.push([x + xdirection, y + 1]);
             }
@@ -556,6 +553,11 @@ function calcMoves(type, map, x, y, color) {
 
 }
 
+//Returns a list of moves of all of a given color's pieces that put its opponent's king into check
+// Result array structure: [[movex, movey]]
+/*function calcMovesToCheck(color, ...) {
+    
+}*/
 
 //Returns a list of all opponent moves from currx, curry that can take down a piece given its proposed coordinates nextx, nexty. if there are no moves, returns null
 //  Result array structure: [ [movex, movey] ]
